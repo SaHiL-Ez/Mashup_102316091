@@ -131,4 +131,7 @@ To deploy this app on **Streamlit Cloud**:
         EMAIL_PASSWORD = "your_app_password"
         ```
 
-![Final Result](image/final_image.png)
+![Dashboard](image/final_image.png)
+
+### Email Output
+![Email Received](image/mail.png)
