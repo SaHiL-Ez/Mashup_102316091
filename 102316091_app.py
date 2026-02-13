@@ -10,8 +10,8 @@ import shutil
 
 # Configuration: Set these to your Gmail details to avoid entering them in the UI every time.
 # WARNING: Do not share this file publicly if you put your real password here.
-FIXED_SENDER_EMAIL = "skumar1_be23@thapar.edu"      # e.g. "yourname@gmail.com"
-FIXED_APP_PASSWORD = "gymm jjzy qlze agjh"      # e.g. "xxxx xxxx xxxx xxxx"
+FIXED_SENDER_EMAIL = ""      # e.g. "yourname@gmail.com"
+FIXED_APP_PASSWORD = ""      # e.g. "xxxx xxxx xxxx xxxx"
 
 # Import the CLI script dynamically since it starts with a number
 spec = importlib.util.spec_from_file_location("mashup_module", "102316091.py")
