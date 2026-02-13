@@ -116,20 +116,6 @@ Open your browser at `http://localhost:8501`.
 
 ---
 
-## Deployment
-
-To deploy this app on **Streamlit Cloud**:
-
-1.  Push your code to a GitHub repository.
-2.  Login to [share.streamlit.io](https://share.streamlit.io).
-3.  Deploy the app by selecting your repository and `102316091_app.py`.
-4.  **Configuration**:
-    -   The app requires **FFmpeg**. This is handled by the `packages.txt` file included in the repo.
-    -   **Secrets**: For email functionality, go to App Settings -> Secrets and add:
-        ```toml
-        EMAIL_SENDER = "your_email@gmail.com"
-        EMAIL_PASSWORD = "your_app_password"
-        ```
 
 ![Dashboard](image/final_image.png)
 
