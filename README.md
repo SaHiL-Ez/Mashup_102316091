@@ -51,3 +51,18 @@ streamlit run 102316091_app.py
     - **Audio Duration**: Minimum 20 seconds.
     - **Email Id**: Your email address to receive the mashup.
 3.  Click **Submit**.
+
+## Deployment on Streamlit Cloud
+
+1.  **Push to GitHub**: Ensure this code is in a GitHub repository.
+2.  **Login**: Go to [share.streamlit.io](https://share.streamlit.io) and login with GitHub.
+3.  **New App**: Click "New app" and select your repository.
+    - **Main file path**: `102316091_app.py`
+4.  **Secrets (Optional)**: If you want to use the email feature without exposing your password in the code:
+    - Go to **Advanced Settings** -> **Secrets**.
+    - Add the following:
+      ```toml
+      EMAIL_SENDER = "your_email@gmail.com"
+      EMAIL_PASSWORD = "your_app_password"
+      ```
+5.  **Deploy**: Click "Deploy". Streamlit will automatically install dependencies from `requirements.txt` and `packages.txt` (FFmpeg).

@@ -64,18 +64,32 @@ with st.form("mashup_form"):
     email_id = st.text_input("Email Id")
     
     st.markdown("### Email Credentials (Optional)")
-    send_email_checkbox = st.checkbox("Send Result via Email?", value=True if (FIXED_SENDER_EMAIL and FIXED_APP_PASSWORD) else False)
     
-    sender_email = FIXED_SENDER_EMAIL
-    app_password = FIXED_APP_PASSWORD
+    # Try to load from secrets (Best practice for Streamlit Cloud)
+    secrets_sender = st.secrets.get("EMAIL_SENDER", "")
+    secrets_password = st.secrets.get("EMAIL_PASSWORD", "")
+    
+    # Logic: Secrets > Hardcoded > Input
+    # Only check "Send Email" by default if credentials exist (Secrets or Fixed)
+    has_creds = (secrets_sender and secrets_password) or (FIXED_SENDER_EMAIL and FIXED_APP_PASSWORD)
+    
+    send_email_checkbox = st.checkbox("Send Result via Email?", value=bool(has_creds))
+    
+    sender_email = ""
+    app_password = ""
     
     if send_email_checkbox:
-        # Only show inputs if NOT hardcoded
-        if not FIXED_SENDER_EMAIL or not FIXED_APP_PASSWORD:
+        if secrets_sender and secrets_password:
+             sender_email = secrets_sender
+             app_password = secrets_password
+             st.info("Using credentials from Streamlit Secrets.")
+        elif FIXED_SENDER_EMAIL and FIXED_APP_PASSWORD:
+             sender_email = FIXED_SENDER_EMAIL
+             app_password = FIXED_APP_PASSWORD
+             st.info(f"Using configured sender email: {FIXED_SENDER_EMAIL}")
+        else:
             sender_email = st.text_input("Sender Email (Gmail)", placeholder="your_email@gmail.com")
             app_password = st.text_input("App Password", type="password", placeholder="xxxx xxxx xxxx xxxx")
-        else:
-             st.info(f"Using configured sender email: {FIXED_SENDER_EMAIL}")
     
     submitted = st.form_submit_button("Submit")
 
