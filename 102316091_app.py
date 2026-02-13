@@ -66,8 +66,14 @@ with st.form("mashup_form"):
     st.markdown("### Email Credentials (Optional)")
     
     # Try to load from secrets (Best practice for Streamlit Cloud)
-    secrets_sender = st.secrets.get("EMAIL_SENDER", "")
-    secrets_password = st.secrets.get("EMAIL_PASSWORD", "")
+    secrets_sender = ""
+    secrets_password = ""
+    try:
+        secrets_sender = st.secrets.get("EMAIL_SENDER", "")
+        secrets_password = st.secrets.get("EMAIL_PASSWORD", "")
+    except Exception:
+        # Secrets not found (local run without secrets.toml), ignore
+        pass
     
     # Logic: Secrets > Hardcoded > Input
     # Only check "Send Email" by default if credentials exist (Secrets or Fixed)
