@@ -1,68 +1,134 @@
-# Mashup Assignment
+# Mashup Generator
 
-This project provides a tool to download videos from YouTube for a specific singer, convert them to audio, cut the first few seconds, and merge them into a single mashup file. It includes both a Command Line Interface (CLI) and a Web Interface using Streamlit.
+A powerful tool to create audio mashups from YouTube videos of your favorite singers. This project includes both a **Command Line Interface (CLI)** for advanced users and a **Streamlit Web Application** for an easy-to-use experience.
 
-## Features
-- **Download**: Fetches videos from YouTube.
-- **Convert & Cut**: Extracts audio and trims the start.
-- **Merge**: Concatenates clips into a single audio file.
-- **Web UI**: User-friendly interface with Email functionality.
+![Dashboard](image/final_image.png)
+
+## Table of Contents
+- [Assignment Overview](#assignment-overview)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Program 1: Command Line Interface](#program-1-command-line-interface)
+- [Program 2: Web Service](#program-2-web-service)
+    - [How it Works](#how-it-works)
+    - [Running the App](#running-the-app)
+- [Deployment](#deployment)
+
+---
+
+## Assignment Overview
+
+**Program 1**: A Python script (`102316091.py`) that:
+1.  Takes keyword/singer name, number of videos (`N`), trim duration (`Y`), and output filename as arguments.
+2.  Downloads `N` videos from YouTube.
+3.  Converts them to audio.
+4.  Cuts the first `Y` seconds from each.
+5.  Merges them into a single file.
+
+**Program 2**: A Web Interface (`102316091_app.py`) that:
+1.  Provides a form to input parameters.
+2.  Processes the mashup on the server.
+3.  Sends the result via Email (optional) and allows direct Download.
+
+---
 
 ## Prerequisites
 
-1.  **Python**: Ensure Python is installed.
-2.  **FFmpeg**: Ensure FFmpeg is installed and added to your system PATH (required for `moviepy`).
-3.  **Dependencies**: Install the required Python packages:
+1.  **Python 3.7+**
+2.  **FFmpeg**: Required for audio processing. Ensure it is installed and added to your system PATH.
+    -   *Windows*: Download from [ffmpeg.org](https://ffmpeg.org/download.html), extract, and add `bin` folder to Environment Variables.
+    -   *Linux*: `sudo apt install ffmpeg`
+
+## Installation
+
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/your-username/mashup-repo.git
+    cd mashup-repo
+    ```
+
+2.  **Install dependencies**:
     ```bash
     pip install -r requirements.txt
     ```
 
-## 1. CLI Usage (`102316091.py`)
+---
 
-### Command Format
+## Program 1: Command Line Interface
+
+The CLI tool allows you to generate mashups directly from your terminal.
+
+**File**: `102316091.py`
+
+### Usage
 ```bash
 python 102316091.py <SingerName> <NumberOfVideos> <AudioDuration> <OutputFileName>
 ```
 
-### Constraints
-- **NumberOfVideos**: Must be greater than 10.
-- **AudioDuration**: Must be greater than or equal to 20.
+### Parameters
+-   `<SingerName>`: The artist to search for (e.g., "Sharry Mann").
+-   `<NumberOfVideos>`: Number of videos to download. **Must be > 10**.
+-   `<AudioDuration>`: Seconds to cut from the start of each video. **Must be >= 20**.
+-   `<OutputFileName>`: Name of the final output file (e.g., `mashup.mp3`).
 
 ### Example
-To create a mashup of "Tom Misch" with 11 videos, each cut to 20 seconds:
 ```bash
-python 102316091.py "Tom Misch" 11 20 "mashup.mp3"
+python 102316091.py "Sharry Mann" 11 20 "output.mp3"
 ```
-The output file `mashup.mp3` will be saved in the current directory.
+*Successfully creates `output.mp3` in the current directory.*
 
-## 2. Web Service Usage (`102316091_app.py`)
+---
 
-### Running the App
-Run the Streamlit app with the following command:
+## Program 2: Web Service
+
+The web application provides a user-friendly interface to generate and download mashups.
+
+**File**: `102316091_app.py`
+
+### How it Works
+The web service follows a strictly defined workflow to ensure a smooth user experience:
+
+1.  **User Input**:
+    *   **Singer Name**: Enter the name of the artist you want to create a mashup for.
+    *   **Number of Videos**: Specify how many videos to fetch (Validation: Must be > 10).
+    *   **Audio Duration**: Specify the duration in seconds to clip from each video (Validation: Must be >= 20).
+    *   **Email Id**: Enter the recipient's email address.
+
+2.  **Processing**:
+    *   Upon clicking **Submit**, the backend triggers the mashup logic.
+    *   It searches YouTube for the specified number of videos.
+    *   Downloads the audio streams.
+    *   Trims the first `Y` seconds from each audio file.
+    *   Merges all clips into a single continuous audio track.
+
+3.  **Output & Delivery**:
+    *   **Zip Creation**: The final audio file is compressed into a ZIP archive (`mashup_output.zip`).
+    *   **Email Delivery (Optional)**: If selected, the ZIP file is emailed to the provided address using SMTP.
+    *   **Direct Download**: A **"Download Zip"** button appears, allowing you to save the file locally to your computer immediately.
+
+### Running the App Locally
+
+Start the Streamlit server:
 ```bash
 streamlit run 102316091_app.py
 ```
+Open your browser at `http://localhost:8501`.
 
-### Using the Interface
-1.  Open the URL provided in the terminal (usually `http://localhost:8501`).
-2.  Fill in the form:
-    - **Singer Name**: Name of the artist.
-    - **Number of Videos**: Minimum 11.
-    - **Audio Duration**: Minimum 20 seconds.
-    - **Email Id**: Your email address to receive the mashup.
-3.  Click **Submit**.
+---
 
-## Deployment on Streamlit Cloud
+## Deployment
 
-1.  **Push to GitHub**: Ensure this code is in a GitHub repository.
-2.  **Login**: Go to [share.streamlit.io](https://share.streamlit.io) and login with GitHub.
-3.  **New App**: Click "New app" and select your repository.
-    - **Main file path**: `102316091_app.py`
-4.  **Secrets (Optional)**: If you want to use the email feature without exposing your password in the code:
-    - Go to **Advanced Settings** -> **Secrets**.
-    - Add the following:
-      ```toml
-      EMAIL_SENDER = "your_email@gmail.com"
-      EMAIL_PASSWORD = "your_app_password"
-      ```
-5.  **Deploy**: Click "Deploy". Streamlit will automatically install dependencies from `requirements.txt` and `packages.txt` (FFmpeg).
+To deploy this app on **Streamlit Cloud**:
+
+1.  Push your code to a GitHub repository.
+2.  Login to [share.streamlit.io](https://share.streamlit.io).
+3.  Deploy the app by selecting your repository and `102316091_app.py`.
+4.  **Configuration**:
+    -   The app requires **FFmpeg**. This is handled by the `packages.txt` file included in the repo.
+    -   **Secrets**: For email functionality, go to App Settings -> Secrets and add:
+        ```toml
+        EMAIL_SENDER = "your_email@gmail.com"
+        EMAIL_PASSWORD = "your_app_password"
+        ```
+
+![Final Result](image/final_image.png)
