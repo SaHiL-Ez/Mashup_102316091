@@ -137,15 +137,16 @@ if submitted:
                         st.success("Done! Email sent successfully.")
                     else:
                         st.error(f"Failed to send email: {message}")
-                else:
-                    st.success("Done! Mashup generated successfully.")
-                    with open(zip_file, "rb") as fp:
-                        st.download_button(
-                            label="Download Zip",
-                            data=fp,
-                            file_name="mashup_output.zip",
-                            mime="application/zip"
-                        )
+                
+                # 5. Download Button (Always)
+                st.success("Mashup generated successfully!")
+                with open(zip_file, "rb") as fp:
+                    btn = st.download_button(
+                        label="Download Zip",
+                        data=fp,
+                        file_name="mashup_output.zip",
+                        mime="application/zip"
+                    )
                 
         except Exception as e:
             st.error(f"An error occurred: {e}")
