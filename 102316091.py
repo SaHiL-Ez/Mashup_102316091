@@ -23,7 +23,12 @@ def download_and_convert(singer, n, output_dir="temp_downloads"):
         }],
         'noplaylist': True,
         'quiet': True,
-        'default_search': f"ytsearch{n}:{singer}" 
+        'default_search': f"ytsearch{n}:{singer}",
+        # Anti-403 options
+        'source_address': '0.0.0.0', # Force IPv4
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        }
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
