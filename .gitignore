@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+temp_mashup_files/
+temp_mashup_web/
+mashup_output.mp3
+mashup_output_web.mp3
+mashup_output.zip
+validation_test.mp3
+debug_moviepy.py
+debug_moviepy_file.py
+debug_attributes.txt
+.streamlit/
