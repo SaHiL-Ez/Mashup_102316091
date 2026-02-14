@@ -18,7 +18,7 @@ def download_one(url, output_dir, max_retries=3):
     
     # Build extractor args for YouTube
     youtube_extractor_args = {
-        'player_client': ['ios', 'mweb'],  # iOS client works without JS
+        'player_client': ['android', 'android_music'],  # Android client has better format support
         'skip': ['hls', 'dash', 'translated_subs']
     }
     
@@ -31,8 +31,8 @@ def download_one(url, output_dir, max_retries=3):
         print(f"Using visitor_data for authentication (length: {len(visitor_data)})")
     
     ydl_opts = {
-        # Use format compatible with iOS client - specific audio formats that iOS supports
-        'format': '140/251/250/249/bestaudio/best',  # m4a audio formats iOS client provides
+        # Use simpler format string - let yt-dlp choose best available audio
+        'format': 'bestaudio/best',
         'outtmpl': f'{output_dir}/%(title)s.%(ext)s',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
@@ -42,12 +42,11 @@ def download_one(url, output_dir, max_retries=3):
         'noplaylist': True,
         'quiet': True,
         'no_warnings': True,
-        # Enhanced anti-bot options
+        # Android client headers
         'http_headers': {
-            'User-Agent': 'com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)',
+            'User-Agent': 'com.google.android.youtube/17.36.4 (Linux; U; Android 12; GB) gzip',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-us,en;q=0.5',
-            'Sec-Fetch-Mode': 'navigate',
         },
         # YouTube-specific extractor args with tokens
         'extractor_args': {
@@ -57,11 +56,9 @@ def download_one(url, output_dir, max_retries=3):
         'sleep_interval': 1,
         'max_sleep_interval': 3,
         'sleep_interval_requests': 1,
-        # Additional options to avoid 403
+        # Additional options
         'age_limit': None,
         'nocheckcertificate': True,
-        # Allow any available format if preferred ones don't exist
-        'ignoreerrors': False,
     }
     
     # Retry logic with exponential backoff
