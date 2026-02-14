@@ -22,7 +22,7 @@ def download_one(url, output_dir):
         # Anti-403 options
         # 'source_address': '0.0.0.0', # Commented out to allow IPv6 if available on cloud
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
         }
     }
     
@@ -43,28 +43,34 @@ def download_and_convert(singer, n, output_dir="temp_downloads"):
 
     print(f"Searching for {n} videos of {singer}...")
     
-    # 1. Fetch URLs first (fast)
+    # 1. Fetch URLs first
     search_opts = {
         'quiet': True,
-        'extract_flat': True, # Don't download, just extract info
+        'extract_flat': True, 
         'default_search': f"ytsearch{n}:{singer}",
         'noplaylist': True,
     }
     
     urls = []
-    with yt_dlp.YoutubeDL(search_opts) as ydl:
-        info = ydl.extract_info(f"ytsearch{n}:{singer}", download=False)
-        if 'entries' in info:
-            urls = [entry['url'] for entry in info['entries']]
-            
-    print(f"Found {len(urls)} videos. Starting parallel download...")
+    
+    try:
+        # Get Info
+        with yt_dlp.YoutubeDL(search_opts) as ydl:
+            info = ydl.extract_info(f"ytsearch{n}:{singer}", download=False)
+            if 'entries' in info:
+                urls = [entry['url'] for entry in info['entries']]
+                
+        print(f"Found {len(urls)} videos. Starting parallel download (optimized)...")
 
-    # 2. Download in parallel (Reduced workers to avoid 403 Forbidden on Cloud)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        futures = [executor.submit(download_one, url, output_dir) for url in urls]
-        for future in concurrent.futures.as_completed(futures):
-            # We can check results here if needed
-            pass
+        # 2. Download in parallel (Worker count balanced for speed/safety)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            futures = [executor.submit(download_one, url, output_dir) for url in urls]
+            for future in concurrent.futures.as_completed(futures):
+                # We can check results here if needed
+                pass
+             
+    except Exception as e:
+        print(f"Error during search/download: {e}")
 
     return output_dir
 
