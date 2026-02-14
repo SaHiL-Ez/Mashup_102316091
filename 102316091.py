@@ -4,6 +4,8 @@ import yt_dlp
 from moviepy import AudioFileClip, concatenate_audioclips
 import shutil
 import concurrent.futures
+import queue
+import threading
 
 def download_one(url, output_dir, max_retries=3):
     """
@@ -117,21 +119,88 @@ def download_and_convert(singer, n, output_dir="temp_downloads"):
             if 'entries' in info:
                 urls = [entry['url'] for entry in info['entries']]
                 
-        print(f"Found {len(urls)} videos. Starting parallel download (optimized for Streamlit)...")
+        print(f"Found {len(urls)} videos. Starting PIPELINE: Download → Process simultaneously...")
 
-        # 2. Download in parallel (Aggressive for local speed)
+        # PIPELINE PROCESSING: Download and process concurrently
+        # Use a queue to feed downloaded files directly to processing
+        file_queue = queue.Queue()
+        processed_clips = []
+        processing_lock = threading.Lock()
         successful_downloads = 0
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(download_one, url, output_dir) for url in urls]
-            for i, future in enumerate(concurrent.futures.as_completed(futures), 1):
-                if future.result():
-                    successful_downloads += 1
-                print(f"Progress: {i}/{len(urls)} processed, {successful_downloads} successful")
+        download_lock = threading.Lock()
         
-        print(f"Download complete: {successful_downloads}/{len(urls)} videos downloaded successfully")
+        def process_worker(duration):
+            """Worker thread that processes files as they arrive in queue"""
+            while True:
+                try:
+                    file_path = file_queue.get(timeout=1)
+                    if file_path is None:  # Poison pill to stop
+                        break
+                    
+                    # Process the audio file immediately
+                    try:
+                        clip = AudioFileClip(file_path)
+                        if clip.duration > duration:
+                            cut_clip = clip.subclipped(0, duration)
+                        else:
+                            cut_clip = clip
+                        
+                        with processing_lock:
+                            processed_clips.append(cut_clip)
+                        print(f"  ⚡ Processed: {os.path.basename(file_path)} ({len(processed_clips)} ready)")
+                    except Exception as e:
+                        print(f"  ✗ Processing error for {os.path.basename(file_path)}: {e}")
+                    finally:
+                        file_queue.task_done()
+                except queue.Empty:
+                    continue
+        
+        # Start processing workers
+        num_process_workers = 11
+        process_threads = []
+        for _ in range(num_process_workers):
+            t = threading.Thread(target=process_worker, args=(duration,), daemon=True)
+            t.start()
+            process_threads.append(t)
+        
+        def download_and_queue(url):
+            """Download and immediately queue for processing"""
+            nonlocal successful_downloads
+            if download_one(url, output_dir):
+                with download_lock:
+                    successful_downloads += 1
+                # Find the newly downloaded file
+                mp3_files = [os.path.join(output_dir, f) for f in os.listdir(output_dir) if f.endswith('.mp3')]
+                if mp3_files:
+                    # Get the most recent file
+                    latest_file = max(mp3_files, key=os.path.getctime)
+                    file_queue.put(latest_file)
+                    print(f"✓ Downloaded {successful_downloads}/{len(urls)} → Queued for processing")
+                return True
+            else:
+                print(f"✗ Download failed")
+                return False
+        
+        # Download in parallel, each download queues file for immediate processing
+        with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+            futures = [executor.submit(download_and_queue, url) for url in urls]
+            concurrent.futures.wait(futures)
+        
+        # Signal processing workers to stop
+        for _ in range(num_process_workers):
+            file_queue.put(None)
+        
+        # Wait for all processing to complete
+        for t in process_threads:
+            t.join()
+        
+        print(f"✅ Pipeline complete: {successful_downloads} downloads, {len(processed_clips)} processed")
         
         if successful_downloads == 0:
             raise Exception("No videos were downloaded successfully. Please check your internet connection or try again later.")
+        
+        # Store processed clips for merging (skip the separate process_audios call)
+        return output_dir, processed_clips
              
     except Exception as e:
         print(f"Error during search/download: {e}")
@@ -169,7 +238,7 @@ def process_audios(source_dir, duration, output_filename):
     # but for simple cutting it should be fine.
     # We collect results ensuring order is implicitly consistent or doesn't matter (mashup order usually random or sorted by filename)
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=11) as executor:
         # Submit all tasks
         future_to_file = {executor.submit(process_one_audio, f, duration): f for f in audio_files}
         
@@ -231,16 +300,4 @@ def main():
         print("Error: AudioDuration must be greater than or equal to 20.")
         sys.exit(1)
 
-    # Main Logic
-    temp_dir = "temp_mashup_files"
-    
-    try:
-        download_and_convert(singer_name, num_videos, temp_dir)
-        process_audios(temp_dir, audio_duration, output_file)
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    finally:
-        clean_up(temp_dir)
-
-if __name__ == "__main__":
-    main()
+    main(singer_name, num_videos, audio_duration, output_file)
