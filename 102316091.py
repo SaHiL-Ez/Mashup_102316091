@@ -5,10 +5,13 @@ from moviepy import AudioFileClip, concatenate_audioclips
 import shutil
 import concurrent.futures
 
-def download_one(url, output_dir):
+def download_one(url, output_dir, max_retries=3):
     """
-    Helper function to download a single video.
+    Helper function to download a single video with retry logic and anti-bot measures.
     """
+    import time
+    import random
+    
     ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': f'{output_dir}/%(title)s.%(ext)s',
@@ -19,20 +22,56 @@ def download_one(url, output_dir):
         }],
         'noplaylist': True,
         'quiet': True,
-        # Anti-403 options
-        # 'source_address': '0.0.0.0', # Commented out to allow IPv6 if available on cloud
+        'no_warnings': True,
+        # Enhanced anti-bot options
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
-        }
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-us,en;q=0.5',
+            'Sec-Fetch-Mode': 'navigate',
+        },
+        # YouTube-specific extractor args
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'web'],
+                'skip': ['hls', 'dash']
+            }
+        },
+        # Rate limiting
+        'sleep_interval': 1,
+        'max_sleep_interval': 3,
+        'sleep_interval_requests': 1,
     }
     
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-        return True
-    except Exception as e:
-        print(f"Failed to download {url}: {e}")
-        return False
+    # Retry logic with exponential backoff
+    for attempt in range(max_retries):
+        try:
+            # Add random delay between retries to avoid rate limiting
+            if attempt > 0:
+                delay = (2 ** attempt) + random.uniform(0, 1)
+                print(f"Retry {attempt + 1}/{max_retries} for {url} after {delay:.1f}s delay...")
+                time.sleep(delay)
+            
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+            return True
+            
+        except Exception as e:
+            error_msg = str(e)
+            if attempt < max_retries - 1:
+                # Check if it's a retryable error
+                if '403' in error_msg or 'Forbidden' in error_msg or 'HTTP Error' in error_msg:
+                    print(f"Download attempt {attempt + 1} failed for {url}: {error_msg}")
+                    continue
+                else:
+                    # Non-retryable error, fail immediately
+                    print(f"Non-retryable error for {url}: {error_msg}")
+                    return False
+            else:
+                print(f"Failed to download {url} after {max_retries} attempts: {error_msg}")
+                return False
+    
+    return False
 
 def download_and_convert(singer, n, output_dir="temp_downloads"):
     """
@@ -60,17 +99,25 @@ def download_and_convert(singer, n, output_dir="temp_downloads"):
             if 'entries' in info:
                 urls = [entry['url'] for entry in info['entries']]
                 
-        print(f"Found {len(urls)} videos. Starting parallel download (optimized)...")
+        print(f"Found {len(urls)} videos. Starting parallel download (optimized for Streamlit)...")
 
-        # 2. Download in parallel (Worker count balanced for speed/safety)
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        # 2. Download in parallel (Reduced workers to avoid rate limiting)
+        successful_downloads = 0
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             futures = [executor.submit(download_one, url, output_dir) for url in urls]
-            for future in concurrent.futures.as_completed(futures):
-                # We can check results here if needed
-                pass
+            for i, future in enumerate(concurrent.futures.as_completed(futures), 1):
+                if future.result():
+                    successful_downloads += 1
+                print(f"Progress: {i}/{len(urls)} processed, {successful_downloads} successful")
+        
+        print(f"Download complete: {successful_downloads}/{len(urls)} videos downloaded successfully")
+        
+        if successful_downloads == 0:
+            raise Exception("No videos were downloaded successfully. Please check your internet connection or try again later.")
              
     except Exception as e:
         print(f"Error during search/download: {e}")
+        raise
 
     return output_dir
 
@@ -104,7 +151,7 @@ def process_audios(source_dir, duration, output_filename):
     # but for simple cutting it should be fine.
     # We collect results ensuring order is implicitly consistent or doesn't matter (mashup order usually random or sorted by filename)
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         # Submit all tasks
         future_to_file = {executor.submit(process_one_audio, f, duration): f for f in audio_files}
         
