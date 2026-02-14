@@ -31,7 +31,8 @@ def download_one(url, output_dir, max_retries=3):
         print(f"Using visitor_data for authentication (length: {len(visitor_data)})")
     
     ydl_opts = {
-        'format': 'bestaudio/best',
+        # Use format compatible with iOS client - specific audio formats that iOS supports
+        'format': '140/251/250/249/bestaudio/best',  # m4a audio formats iOS client provides
         'outtmpl': f'{output_dir}/%(title)s.%(ext)s',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
@@ -59,6 +60,8 @@ def download_one(url, output_dir, max_retries=3):
         # Additional options to avoid 403
         'age_limit': None,
         'nocheckcertificate': True,
+        # Allow any available format if preferred ones don't exist
+        'ignoreerrors': False,
     }
     
     # Retry logic with exponential backoff
