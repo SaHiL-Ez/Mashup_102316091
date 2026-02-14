@@ -13,6 +13,18 @@ import shutil
 FIXED_SENDER_EMAIL = ""      # e.g. "yourname@gmail.com"
 FIXED_APP_PASSWORD = ""      # e.g. "xxxx xxxx xxxx xxxx"
 
+# Load YouTube tokens from Streamlit Secrets and set as environment variables
+try:
+    if hasattr(st, 'secrets'):
+        if 'YOUTUBE_PO_TOKEN' in st.secrets:
+            os.environ['YOUTUBE_PO_TOKEN'] = st.secrets['YOUTUBE_PO_TOKEN']
+            st.sidebar.success("✅ YouTube po_token loaded")
+        if 'YOUTUBE_VISITOR_DATA' in st.secrets:
+            os.environ['YOUTUBE_VISITOR_DATA'] = st.secrets['YOUTUBE_VISITOR_DATA']
+            st.sidebar.success("✅ YouTube visitor_data loaded")
+except Exception as e:
+    st.sidebar.warning(f"⚠️ YouTube tokens not found in secrets: {e}")
+
 # Import the CLI script dynamically since it starts with a number
 spec = importlib.util.spec_from_file_location("mashup_module", "102316091.py")
 mashup_module = importlib.util.module_from_spec(spec)

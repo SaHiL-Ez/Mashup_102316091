@@ -12,6 +12,24 @@ def download_one(url, output_dir, max_retries=3):
     import time
     import random
     
+    # Try to get YouTube tokens from environment (set by Streamlit Secrets)
+    po_token = os.environ.get('YOUTUBE_PO_TOKEN', '')
+    visitor_data = os.environ.get('YOUTUBE_VISITOR_DATA', '')
+    
+    # Build extractor args for YouTube
+    youtube_extractor_args = {
+        'player_client': ['ios', 'mweb'],  # iOS client works without JS
+        'skip': ['hls', 'dash', 'translated_subs']
+    }
+    
+    # Add tokens if available
+    if po_token:
+        youtube_extractor_args['po_token'] = po_token
+        print(f"Using po_token for authentication (length: {len(po_token)})")
+    if visitor_data:
+        youtube_extractor_args['visitor_data'] = visitor_data
+        print(f"Using visitor_data for authentication (length: {len(visitor_data)})")
+    
     ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': f'{output_dir}/%(title)s.%(ext)s',
@@ -30,12 +48,9 @@ def download_one(url, output_dir, max_retries=3):
             'Accept-Language': 'en-us,en;q=0.5',
             'Sec-Fetch-Mode': 'navigate',
         },
-        # YouTube-specific extractor args - use iOS client to avoid JS requirement
+        # YouTube-specific extractor args with tokens
         'extractor_args': {
-            'youtube': {
-                'player_client': ['ios', 'mweb'],  # iOS client works without JS
-                'skip': ['hls', 'dash', 'translated_subs']
-            }
+            'youtube': youtube_extractor_args
         },
         # Rate limiting
         'sleep_interval': 1,
