@@ -4,6 +4,13 @@ A powerful tool to create audio mashups from YouTube videos of your favorite sin
 
 ![Dashboard](image/final_image.png)
 
+## **Unique Feature: Multithreading & Parallel Processing**
+
+**This application implements advanced parallel processing to significantly speed up the mashup generation.**
+- **Concurrent Downloading**: Uses **multi-threading** to download multiple videos simultaneously, utilizing your full bandwidth and avoiding sequential bottlenecks.
+- **Parallel Audio Processing**: Processes and cuts audio files in **parallel**, drastically reducing the waiting time for large inputs (e.g., >20 videos).
+- **Optimized Performance**: Automatically handles heavy workloads by distributing tasks across multiple threads, ensuring a smooth and fast experience.
+
 ## Table of Contents
 - [Assignment Overview](#assignment-overview)
 - [Prerequisites](#prerequisites)
