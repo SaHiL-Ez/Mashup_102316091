@@ -125,12 +125,24 @@ if submitted:
 
         try:
             # 1. Download and Convert
-            status_text.info(f"Downloading {num_videos} videos of {singer_name}...")
-            mashup_module.download_and_convert(singer_name, num_videos, temp_dir)
+            st.info(f"Downloading {num_videos} videos of {singer_name}...")
             
-            # 2. Process
-            status_text.info("Processing audio files...")
-            mashup_module.process_audios(temp_dir, audio_duration, output_file)
+            # Download and process with pipeline
+            temp_dir, processed_clips = mashup_module.download_and_convert(singer_name, num_videos, audio_duration, temp_dir)
+            
+            # Merge clips (already processed by pipeline)
+            st.info("Merging clips into final mashup...")
+            if processed_clips:
+                final_clip = mashup_module.concatenate_audioclips(processed_clips)
+                final_clip.write_audiofile(output_file)
+                final_clip.close()
+                
+                # Close all clips
+                for clip in processed_clips:
+                    try:
+                        clip.close()
+                    except:
+                        pass
             
             # Check if output file was created
             if not os.path.exists(output_file):

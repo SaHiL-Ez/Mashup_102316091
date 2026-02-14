@@ -93,9 +93,10 @@ def download_one(url, output_dir, max_retries=3):
     
     return False
 
-def download_and_convert(singer, n, output_dir="temp_downloads"):
+def download_and_convert(singer, n, duration, output_dir="temp_downloads"):
     """
     Downloads N videos of the singer and converts them to audio concurrently.
+    Processes audio clips in pipeline as they download.
     """
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
