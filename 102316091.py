@@ -25,22 +25,25 @@ def download_one(url, output_dir, max_retries=3):
         'no_warnings': True,
         # Enhanced anti-bot options
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'User-Agent': 'com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-us,en;q=0.5',
             'Sec-Fetch-Mode': 'navigate',
         },
-        # YouTube-specific extractor args
+        # YouTube-specific extractor args - use iOS client to avoid JS requirement
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'web'],
-                'skip': ['hls', 'dash']
+                'player_client': ['ios', 'mweb'],  # iOS client works without JS
+                'skip': ['hls', 'dash', 'translated_subs']
             }
         },
         # Rate limiting
         'sleep_interval': 1,
         'max_sleep_interval': 3,
         'sleep_interval_requests': 1,
+        # Additional options to avoid 403
+        'age_limit': None,
+        'nocheckcertificate': True,
     }
     
     # Retry logic with exponential backoff
