@@ -52,10 +52,10 @@ def download_one(url, output_dir, max_retries=3):
         'extractor_args': {
             'youtube': youtube_extractor_args
         },
-        # Rate limiting
-        'sleep_interval': 1,
-        'max_sleep_interval': 3,
-        'sleep_interval_requests': 1,
+        # No rate limiting for local speed (set to 0 for maximum speed)
+        'sleep_interval': 0,
+        'max_sleep_interval': 0,
+        'sleep_interval_requests': 0,
         # Additional options
         'age_limit': None,
         'nocheckcertificate': True,
@@ -119,9 +119,9 @@ def download_and_convert(singer, n, output_dir="temp_downloads"):
                 
         print(f"Found {len(urls)} videos. Starting parallel download (optimized for Streamlit)...")
 
-        # 2. Download in parallel (Reduced workers to avoid rate limiting)
+        # 2. Download in parallel (Aggressive for local speed)
         successful_downloads = 0
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             futures = [executor.submit(download_one, url, output_dir) for url in urls]
             for i, future in enumerate(concurrent.futures.as_completed(futures), 1):
                 if future.result():
@@ -169,7 +169,7 @@ def process_audios(source_dir, duration, output_filename):
     # but for simple cutting it should be fine.
     # We collect results ensuring order is implicitly consistent or doesn't matter (mashup order usually random or sorted by filename)
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         # Submit all tasks
         future_to_file = {executor.submit(process_one_audio, f, duration): f for f in audio_files}
         
